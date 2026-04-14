@@ -1,1 +1,59 @@
 
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const URL = "https://rncrghizajybhwbgml.supabase.co";
+  const KEY = "sb_publishable_...";
+  const supabase = createClient(URL, KEY);
+
+  const MY_ID = "4bc5604e-081b-47d9-b960-2db124301922";
+
+  window.changeStatus = async (text, color) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ status: text, color: color })
+      .eq("id", MY_ID);
+
+    if (error) {
+      alert("Ошибка! Проверьте RLS политики в Supabase.");
+      console.error(error);
+    }
+
+    fetchGroup();
+  };
+
+  async function fetchGroup() {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("username", { ascending: true });
+
+    if (error) {
+      return console.error(error);
+    }
+
+    const list = document.getElementById("groupList");
+
+    list.innerHTML = data
+      .map(
+        (user) => `
+        <div class="user-line">
+          <div class="avatar-dot" style="background: ${user.color || "#eee"}"></div>
+          <div style="flex-grow: 1;">
+            <b>${user.username}</b><br>
+            <small style="color: #666;">${user.status || "Сейчас не задан"}</small>
+          </div>
+        </div>
+      `
+      )
+      .join("");
+
+    const me = data.find((u) => u.id === MY_ID);
+    if (me) {
+      document.getElementById("myInfo").innerText = `Вы: ${me.username}`;
+    }
+  }
+
+  fetchGroup();
+  setInterval(fetchGroup, 3000);
+</script>
